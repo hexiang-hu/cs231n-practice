@@ -55,8 +55,10 @@ def softmax_loss_naive(W, X, y, reg):
   dW /= num_train
   # calculate average batch loss
   loss /= num_train
+
   # regularization
   loss += 0.5 * reg * np.sum( W ** 2)
+  dW += reg * W
 
   return loss, dW
 
@@ -98,4 +100,6 @@ def softmax_loss_vectorized(W, X, y, reg):
   loss /= num_train
   dW /= num_train
 
+  loss += 0.5 * reg * np.sum( W ** 2)
+  dW += reg * W
   return loss, dW

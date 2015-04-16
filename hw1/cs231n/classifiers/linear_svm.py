@@ -50,7 +50,8 @@ def svm_loss_naive(W, X, y, reg):
 
   # Add regularization to the loss.
   loss += 0.5 * reg * np.sum(W ** 2)
-
+  # add regularization gradient
+  dW += reg * W
   #############################################################################
   # TODO:                                                                     #
   # Compute the gradient of the loss function and store it dW.                #
@@ -82,7 +83,7 @@ def svm_loss_vectorized(W, X, y, reg):
   scores = W.dot(X)
 
   # select all correct class score
-  correct_class_score = scores[y, range(num_train) ]
+  correct_class_score = scores[y, range(len(y)) ]
   
   margins = np.maximum(scores - correct_class_score + 1, 0)
   margins[y, range(num_train)] = 0
@@ -108,5 +109,8 @@ def svm_loss_vectorized(W, X, y, reg):
   dW = select_wrong.dot(X.T)
   dW -= select_correct.dot(X.T)
   dW /= num_train
+  
+  # add regularization gradient
+  dW += reg * W
 
   return loss, dW

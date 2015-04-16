@@ -23,13 +23,15 @@ def init_two_layer_model(input_size, hidden_size, output_size):
   """
   # initialize a model
   model = {}
-  model['W1'] = 0.00001 * np.random.randn(input_size, hidden_size)
+  # model['W1'] = 0.00001 * np.random.randn(input_size, hidden_size)
+  model['W1'] = np.random.randn(input_size, hidden_size) * np.sqrt(2.0 / (input_size * hidden_size) )
   model['b1'] = np.zeros(hidden_size)
-  model['W2'] = 0.00001 * np.random.randn(hidden_size, output_size)
+  # model['W2'] = 0.00001 * np.random.randn(hidden_size, output_size)
+  model['W2'] = np.random.randn(hidden_size, output_size) * np.sqrt(2.0 / (hidden_size * output_size) )
   model['b2'] = np.zeros(output_size)
   return model
 
-def two_layer_net(X, model, y=None, reg=0.0):
+def two_layer_net(X, model, y=None, reg=0.0, verbose=False):
   """
   Compute the loss and gradients for a two layer fully connected neural network.
   The net has an input dimension of D, a hidden layer dimension of H, and
@@ -80,17 +82,24 @@ def two_layer_net(X, model, y=None, reg=0.0):
   # Store the result in the scores variable, which should be an array of      #
   # shape (N, C).                                                             #
   #############################################################################
-  pass
-  #############################################################################
-  #                              END OF YOUR CODE                             #
-  #############################################################################
+  
+  # Rectified linear unit
+  a1 = X.dot(W1) + b1
+  a1[ a1 < 0 ] = 0
+
+  if verbose: print "Layer 1 result shape: " + str(a1.shape)
+
+  # Softmax unit
+  a2 = a1.dot(W2) + b2
+
+  if verbose: print "Layer 2 result shape: " + str(a2.shape)
   
   # If the targets are not given then jump out, we're done
   if y is None:
-    return scores
+    return a2
 
   # compute the loss
-  loss = None
+  loss = 0
   #############################################################################
   # TODO: Finish the forward pass, and compute the loss. This should include  #
   # both the data loss and L2 regularization for W1 and W2. Store the result  #
@@ -98,11 +107,18 @@ def two_layer_net(X, model, y=None, reg=0.0):
   # classifier loss. So that your results match ours, multiply the            #
   # regularization loss by 0.5                                                #
   #############################################################################
-  pass
-  #############################################################################
-  #                              END OF YOUR CODE                             #
-  #############################################################################
+  
+  # Calculating softmax value
+  # step 1, center activation value
+  # step 2, exponentially interpolate activation value
+  # step 3, calculate softmax value for each class at each training sample 
+  a2 -= np.amax( a2, axis=0 )
+  scores = np.exp(a2) / np.sum( np.exp(a2), axis=0 )
 
+
+
+  loss += 0.5 * reg * ( np.sum(W1 ** 2) + np.sum(W2 ** 2) )
+  
   # compute the gradients
   grads = {}
   #############################################################################
