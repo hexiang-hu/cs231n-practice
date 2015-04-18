@@ -83,7 +83,7 @@ def svm_loss_vectorized(W, X, y, reg):
   scores = W.dot(X)
 
   # select all correct class score
-  correct_class_score = scores[y, range(len(y)) ]
+  correct_class_score = scores[y, range(num_train) ]
   
   margins = np.maximum(scores - correct_class_score + 1, 0)
   margins[y, range(num_train)] = 0

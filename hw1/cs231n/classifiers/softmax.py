@@ -85,21 +85,16 @@ def softmax_loss_vectorized(W, X, y, reg):
   f = W.dot(X)
   f -= np.amax(f, axis=0)
 
-  p = np.exp(f) / np.sum(np.exp(f), axis=0)
+  prob = np.exp(f) / np.sum(np.exp(f), axis=0)
+  prob[y, range(num_train)] -= 1
   
-  loss = np.sum(- f[y, range(num_train)] + np.log( np.sum( np.exp(f), axis=0) ))
+  # Data loss
+  loss = np.sum(- f[y, range(num_train)] + np.log( np.sum( np.exp(f), axis=0) )) / num_train
 
-  # the universal component gradient
-  dW += p.dot(X.T)
+  # Weight sub-gradient
+  dW = p.dot(X.T) / num_train
 
-  # the correct specified component gradient 
-  select_correct = np.zeros_like(f)
-  select_correct[y, range(num_train)] = 1
-  dW -= select_correct.dot(X.T)
-
-  loss /= num_train
-  dW /= num_train
-
+  # Regularization term
   loss += 0.5 * reg * np.sum( W ** 2)
   dW += reg * W
   return loss, dW

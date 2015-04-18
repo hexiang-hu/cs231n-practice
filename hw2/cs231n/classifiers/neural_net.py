@@ -84,19 +84,18 @@ def two_layer_net(X, model, y=None, reg=0.0, verbose=False):
   #############################################################################
   
   # Rectified linear unit
-  a1 = X.dot(W1) + b1
-  a1[ a1 < 0 ] = 0
+  hidden_activation = np.maximum( X.dot(W1) + b1, 0)
 
-  if verbose: print "Layer 1 result shape: " + str(a1.shape)
+  if verbose: print "Layer 1 result shape: " + str(hidden_activation.shape)
 
   # Softmax unit
-  a2 = a1.dot(W2) + b2
+  scores = hidden_activation.dot(W2) + b2
 
-  if verbose: print "Layer 2 result shape: " + str(a2.shape)
+  if verbose: print "Layer 2 result shape: " + str(scores.shape)
   
   # If the targets are not given then jump out, we're done
   if y is None:
-    return a2
+    return scores
 
   # compute the loss
   loss = 0
@@ -112,11 +111,18 @@ def two_layer_net(X, model, y=None, reg=0.0, verbose=False):
   # step 1, center activation value
   # step 2, exponentially interpolate activation value
   # step 3, calculate softmax value for each class at each training sample 
-  a2 -= np.amax( a2, axis=0 )
-  scores = np.exp(a2) / np.sum( np.exp(a2), axis=0 )
 
+  # subtract max class score
+  scores = scores - np.expand_dims( np.amax( scores, axis=1 ), axis=1)
 
+  exp_scores = np.exp(scores)
 
+  probs = exp_scores / np.sum( exp_scores, axis=1 , keepdims=True)
+
+  # Softmax data loss 
+  loss = np.sum(- scores[range(len(y)), y] + np.log( np.sum( exp_scores, axis=1) )) / N
+
+  # L2 regularization
   loss += 0.5 * reg * ( np.sum(W1 ** 2) + np.sum(W2 ** 2) )
   
   # compute the gradients
@@ -126,10 +132,30 @@ def two_layer_net(X, model, y=None, reg=0.0, verbose=False):
   # and biases. Store the results in the grads dictionary. For example,       #
   # grads['W1'] should store the gradient on W1, and be a matrix of same size #
   #############################################################################
-  pass
-  #############################################################################
-  #                              END OF YOUR CODE                             #
-  #############################################################################
+
+  # Calculate the error delta
+  delta_scores = probs
+  delta_scores[range(N), y] -= 1
+  delta_scores /= N
+
+  # Back-propagate Softmax gradient
+  grads['W2'] = hidden_activation.T.dot(delta_scores)
+  grads['b2'] = np.sum( delta_scores, axis=0 )
+
+  # Back-propagate LeRU gradient
+  delta_hidden = delta_scores.dot(W2.T)
+  
+  # For those unit have activation less or equal zero, 
+  # there should be no gradient descent
+  delta_hidden[hidden_activation <= 0] = 0
+
+  grads['W1'] = X.T.dot(delta_hidden)
+  grads['b1'] = np.sum(delta_hidden, axis=0 )
+
+  # Regularization gradient
+  grads['W2'] += reg * W2
+  grads['W1'] += reg * W1
+
 
   return loss, grads
 

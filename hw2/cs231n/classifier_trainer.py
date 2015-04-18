@@ -66,7 +66,7 @@ class ClassifierTrainer(object):
     train_acc_history = []
     val_acc_history = []
     for it in xrange(num_iters):
-      if it % 10 == 0:  print 'starting iteration ', it
+      if it % 500 == 0:  print 'starting iteration ', it
 
       # get batch of data
       if sample_batches:
@@ -90,30 +90,30 @@ class ClassifierTrainer(object):
         elif update == 'momentum':
           if not p in self.step_cache: 
             self.step_cache[p] = np.zeros(grads[p].shape)
-          dx = np.zeros_like(grads[p]) # you can remove this after
+          # dx = np.zeros_like(grads[p]) # you can remove this after
           #####################################################################
           # TODO: implement the momentum update formula and store the step    #
           # update into variable dx. You should use the variable              #
           # step_cache[p] and the momentum strength is stored in momentum.    #
           # Don't forget to also update the step_cache[p].                    #
           #####################################################################
-          pass
-          #####################################################################
-          #                      END OF YOUR CODE                             #
-          #####################################################################
+          self.step_cache[p] = momentum * self.step_cache[p] - learning_rate * grads[p]
+
+          dx = self.step_cache[p]
         elif update == 'rmsprop':
           decay_rate = 0.99 # you could also make this an option
           if not p in self.step_cache: 
             self.step_cache[p] = np.zeros(grads[p].shape)
-          dx = np.zeros_like(grads[p]) # you can remove this after
+
           #####################################################################
           # TODO: implement the RMSProp update and store the parameter update #
           # dx. Don't forget to also update step_cache[p]. Use smoothing 1e-8 #
           #####################################################################
-          pass
-          #####################################################################
-          #                      END OF YOUR CODE                             #
-          #####################################################################
+          
+          self.step_cache[p] = decay_rate * self.step_cache[p] + ( 1 - decay_rate ) * ( grads[p] ** 2 )
+
+          dx = - learning_rate * grads[p] / np.sqrt( self.step_cache[p] + 1e-8)
+          
         else:
           raise ValueError('Unrecognized update type "%s"' % update)
 
