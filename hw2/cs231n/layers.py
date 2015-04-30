@@ -22,10 +22,12 @@ def affine_forward(x, w, b):
   # TODO: Implement the affine forward pass. Store the result in out. You     #
   # will need to reshape the input into rows.                                 #
   #############################################################################
-  pass
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
+
+  # reshape input into rows
+  out = x.reshape( x.shape[0], np.prod(x.shape[1:]) )
+  # Linear activation 
+  out = out.dot(w) + b[np.newaxis, :]
+
   cache = (x, w, b)
   return out, cache
 
@@ -47,13 +49,18 @@ def affine_backward(dout, cache):
   """
   x, w, b = cache
   dx, dw, db = None, None, None
+  
   #############################################################################
   # TODO: Implement the affine backward pass.                                 #
   #############################################################################
-  pass
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
+
+  sp = x.shape
+
+  x  = np.reshape( x, ( sp[0] , np.prod(sp[1:]) ) )
+  dw = np.dot( x.T, dout )
+  db = np.sum( dout, axis=0 )
+  dx = np.reshape( np.dot( dout, w.T ), sp )
+
   return dx, dw, db
 
 
@@ -72,10 +79,11 @@ def relu_forward(x):
   #############################################################################
   # TODO: Implement the ReLU forward pass.                                    #
   #############################################################################
-  pass
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
+
+  out = x.copy()
+  # ReLU non-linearity
+  out[out < 0] = 0
+
   cache = x
   return out, cache
 
@@ -95,10 +103,11 @@ def relu_backward(dout, cache):
   #############################################################################
   # TODO: Implement the ReLU backward pass.                                   #
   #############################################################################
-  pass
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
+  dx = dout.copy()
+
+  # Filter non-positive activation's gradient
+  dx[x <= 0] = 0
+
   return dx
 
 
@@ -130,15 +139,33 @@ def conv_forward_naive(x, w, b, conv_param):
   # TODO: Implement the convolutional forward pass.                           #
   # Hint: you can use the function np.pad for padding.                        #
   #############################################################################
-  pass
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
-  cache = (x, w, b, conv_param)
+  N, C, H, W   = x.shape
+  F, _, HH, WW = w.shape
+  stride, pad  = conv_param['stride'], conv_param['pad']
+
+  # Dimensionality check
+  assert ( H + 2 * pad - HH) % stride == 0, 'width doesn\'t work with current paramter setting'
+  assert ( W + 2 * pad - WW) % stride == 0, 'height doesn\'t work with current paramter setting'
+
+  # Initialize output
+  out_H = ( H + 2 * pad - HH) / stride + 1
+  out_W = ( W + 2 * pad - WW) / stride + 1
+  out = np.zeros( (N, F, out_H, out_W), dtype=x.dtype ) 
+
+  from im2col import im2col_indices
+
+  x_cols = im2col_indices(x, HH, WW, padding=pad, stride=stride)
+
+  res = w.reshape((w.shape[0], -1)).dot(x_cols) + b[:, np.newaxis]
+
+  out = res.reshape((F, out_H, out_W, N))
+  out = out.transpose(3, 0, 1, 2)
+
+  cache = (x, w, b, conv_param, x_cols)
   return out, cache
 
 
-def conv_backward_naive(dout, cache):
+def conv_backward_naive(dout, cache, debug=False):
   """
   A naive implementation of the backward pass for a convolutional layer.
 
@@ -151,14 +178,38 @@ def conv_backward_naive(dout, cache):
   - dw: Gradient with respect to w
   - db: Gradient with respect to b
   """
+
   dx, dw, db = None, None, None
   #############################################################################
   # TODO: Implement the convolutional backward pass.                          #
   #############################################################################
-  pass
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
+  x, w, b, conv_param, x_cols = cache
+  stride, pad = conv_param['stride'], conv_param['pad']
+
+  db = np.sum( dout, axis=(0, 2, 3) )
+  F, _, HH, WW = w.shape
+
+  dout_reshape = np.reshape(dout.transpose(1,2,3,0), (F, -1))
+
+  dw = dout_reshape.dot(x_cols.T).reshape(w.shape)
+
+  dx_cols = w.reshape(F, -1).T.dot(dout_reshape)
+
+  from im2col import col2im_indices
+
+  dx = col2im_indices(dx_cols, x.shape, field_height=HH, field_width=WW, padding=pad, stride=stride, verbose=True)
+
+  if debug:
+    print "dout's shape: {}".format( str(dout.shape) ) 
+    print "dout's reshape: {}".format( str(dout_reshape.shape))
+    print "x's shape: {}".format( str(x.shape) )
+    print "x's cols: {}".format( str(x_cols.shape))
+    print "w's shape: {}".format( str(w.shape) )
+    print "b's shape: {}".format( str(b.shape) )
+    print "stride: {}".format( str(conv_param["stride"]) )
+    print "padding: {}".format( str(conv_param["pad"]) )
+
+
   return dx, dw, db
 
 
