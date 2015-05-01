@@ -228,14 +228,27 @@ def max_pool_forward_naive(x, pool_param):
   - out: Output data
   - cache: (x, pool_param)
   """
-  out = None
+
   #############################################################################
   # TODO: Implement the max pooling forward pass                              #
   #############################################################################
-  pass
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
+
+  N, C, H, W = x.shape
+
+  pool_height, pool_width, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+
+  # First validate the pooling paramters
+  assert H % pool_height == 0, "Image height not divisible by pooling height"
+  assert W % pool_width == 0, "Image width not divisible by pooling width"
+
+  out = np.zeros((N, C, H / pool_height, W / pool_width))
+
+  # Pooling layer forward using iterative method
+  for ii, i in enumerate(xrange(0, H, stride)):
+    for jj, j in enumerate(xrange(0, W, stride)):
+      # iterate through each central point
+      out[:, :, ii, jj] = np.amax( x[:, :, i:i+pool_height,j:j+pool_width].reshape(N, C, -1), axis=2)
+
   cache = (x, pool_param)
   return out, cache
 
@@ -251,14 +264,32 @@ def max_pool_backward_naive(dout, cache):
   Returns:
   - dx: Gradient with respect to x
   """
-  dx = None
   #############################################################################
   # TODO: Implement the max pooling backward pass                             #
   #############################################################################
-  pass
-  #############################################################################
-  #                             END OF YOUR CODE                              #
-  #############################################################################
+
+  # unpack layer cache
+  x, pool_param = cache
+
+  N, C, H, W = x.shape
+  pool_height, pool_width, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+
+  dx = np.zeros_like(x)
+  # Pooling layer backward using iterative method
+  for ii, i in enumerate(xrange(0, H, stride)):
+    for jj, j in enumerate(xrange(0, W, stride)):
+      max_idx = np.argmax( x[:, :, i:i+pool_height,j:j+pool_width].reshape(N, C, -1), axis=2)
+
+      max_cols = np.remainder(max_idx, pool_width) + j
+      max_rows = max_idx / pool_width + i
+
+      for n in xrange(N):
+        for c in xrange(C):
+          dx[n, c, max_rows[n, c], max_cols[n, c]] += dout[n, c, ii, jj]
+
+
+  dx = dx.reshape(N, C, H, W)
+
   return dx
 
 
