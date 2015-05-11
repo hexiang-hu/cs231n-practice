@@ -12,14 +12,20 @@ def random_flips(X):
   - An array of the same shape as X, containing a copy of the data in X,
     but with half the examples flipped along the horizontal direction.
   """
-  out = None
+  N, C, H, W = X.shape
+  out = np.zeros_like(X, dtype=X.dtype)
   #############################################################################
   # TODO: Implement the random_flips function. Store the result in out.       #
   #############################################################################
-  pass
-  #############################################################################
-  #                           END OF YOUR CODE                                #
-  #############################################################################
+  for i in xrange(N):
+    if round(np.random.uniform()):
+      # if the round result is 1, do a x-y flip 
+      tmp = X[i, :].transpose(1,2,0)
+      tmp = np.fliplr(tmp)
+      out[i, :] = tmp.transpose(2,0,1)
+    else:
+      out[i, :] = X[i, :]
+
   return out
 
 
@@ -37,16 +43,18 @@ def random_crops(X, crop_shape):
   """
   N, C, H, W = X.shape
   HH, WW = crop_shape
-  assert HH < H and WW < W
+  assert HH < H and WW < W, "Error: crop shape is larger than image shape"
 
   out = np.zeros((N, C, HH, WW), dtype=X.dtype)
   #############################################################################
   # TODO: Implement the random_crops function. Store the result in out.       #
   #############################################################################
-  pass
-  #############################################################################
-  #                           END OF YOUR CODE                                #
-  #############################################################################
+  for i in xrange(N):
+    # choose an initial coordinates from the candidate combination
+    x = np.random.choice(H - HH, 1)
+    y = np.random.choice(W - WW, 1)
+    
+    out[i, :] = X[i, :, x:x + HH, y:y + WW]
 
   return out
 
@@ -73,10 +81,9 @@ def random_contrast(X, scale=(0.8, 1.2)):
   #############################################################################
   # TODO: Implement the random_contrast function. Store the result in out.    #
   #############################################################################
-  pass
-  #############################################################################
-  #                           END OF YOUR CODE                                #
-  #############################################################################
+  for i in xrange(N):
+    contrast = np.random.uniform(low=low, high=high)
+    out[i, :] = X[i, :] * contrast
   
   return out
 
@@ -103,10 +110,10 @@ def random_tint(X, scale=(-10, 10)):
   #############################################################################
   # TODO: Implement the random_tint function. Store the result in out.        #
   #############################################################################
-  pass
-  #############################################################################
-  #                           END OF YOUR CODE                                #
-  #############################################################################
+  for i in xrange(N):
+    for c in xrange(C):
+      tint = np.random.randint(low=low, high=high)
+      out[i, c, :] = X[i, c, :] + tint
 
   return out
 
