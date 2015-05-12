@@ -364,10 +364,8 @@ def five_layer_convnet(X, model, y=None, reg=0.0, dropout=1.0,
     # TODO: Return features extracted from X.                                 #
     # HINT: This should be VERY simple!                                       #
     ###########################################################################
-    ###########################################################################
-    #                         END OF YOUR CODE                                #  
-    ###########################################################################
-    raise NotImplementedError()
+    return a4
+
   d4, cache5 = dropout_forward(a4, dropout_param)
   scores, cache6 = affine_forward(d4, W5, b5)
 
@@ -392,10 +390,7 @@ def five_layer_convnet(X, model, y=None, reg=0.0, dropout=1.0,
     # TODO: Return the gradient of the loss with respect to the input.        #
     # HINT: This should be VERY simple!                                       #
     ###########################################################################
-    ###########################################################################
-    #                         END OF YOUR CODE                                #  
-    ###########################################################################
-    raise NotImplementedError()
+    return data_loss
 
   grads = {
     'W1': dW1, 'b1': db1, 'W2': dW2, 'b2': db2,
