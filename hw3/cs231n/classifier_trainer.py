@@ -1,5 +1,5 @@
 import numpy as np
-
+import sys
 
 class ClassifierTrainer(object):
   """ The trainer class performs SGD with momentum on a cost function """
@@ -74,7 +74,9 @@ class ClassifierTrainer(object):
     train_acc_history = []
     val_acc_history = []
     for it in xrange(num_iters):
-      if it % 10 == 0:  print 'starting iteration ', it
+      if it % 10 == 0:  
+        print 'starting iteration ', it
+        sys.stdout.flush()
 
       # get batch of data
       if sample_batches:
@@ -173,9 +175,12 @@ class ClassifierTrainer(object):
         if verbose:
           print ('Finished epoch %d / %d: cost %f, train: %f, val %f, lr %e'
                  % (epoch, num_epochs, cost, train_acc, val_acc, learning_rate))
+          sys.stdout.flush()
 
     if verbose:
       print 'finished optimization. best validation accuracy: %f' % (best_val_acc, )
+      sys.stdout.flush()
+      
     # return the best model and the training history statistics
     return best_model, loss_history, train_acc_history, val_acc_history
 
